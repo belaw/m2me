@@ -64,22 +64,23 @@ void write_instrument(int id, FILE *f, Instrument *i) {
         }
     }
 
-    fwrite(make_WaveHeader(1, 44100, 8, i->end), sizeof(WaveHeader), 1, out);
+    WaveHeader *header = make_WaveHeader(1, 44100, 8, i->end);
+    WavePadding *padding = make_WavePadding();
+    WaveSmplChunk *smpl = make_WaveSmplChunk();
+    WaveSampleLoop *loop = make_WaveSampleLoop(0, 0, i->loop, i->end, 0, 0);
+
+    fwrite(header, sizeof(WaveHeader), 1, out);
     fwrite(data, i->end, 1, out);
-    if (ftell(out) & 1) fwrite(make_WavePadding(), sizeof(char), 1, out);
-    fwrite(make_WaveSmplChunk(), sizeof(WaveSmplChunk), 1, out);
-    fwrite(make_WaveSampleLoop(0, 0, i->loop, i->end, 0, 0), sizeof(WaveSampleLoop), 1, out);
-    /*fwrite(make_WaveXtraChunk(), sizeof(WaveXtraChunk), 1, out);
-    fwrite(make_WaveListChunk(44), sizeof(WaveListChunk), 1, out);
-    fwrite(make_WaveChunk(0x4D414E49, 3), sizeof(WaveChunk), 1, out);
-    char inam[3] = {'5', '5', '\0'};
-    fwrite(inam, 3, 1, out);
-    if (ftell(out) & 1)
-        fwrite(make_WavePadding(), sizeof(WavePadding), 1, out);
-    fwrite(make_WaveChunk(0x54465349, 19), sizeof(WaveChunk), 1, out);
-    char openMpt[19] = {'O', 'p', 'e', 'n', 'M', 'P', 'T', ' ', '1', '.', '2', '5', '.', '0', '4', '.', '0', '0'};
-    fwrite(openMpt, 19, 1, out);
-    if (ftell(out) & 1) fwrite(make_WavePadding(), sizeof(char), 1, out);*/
+    if (ftell(out) & 1) fwrite(padding, sizeof(char), 1, out);
+    fwrite(smpl, sizeof(WaveSmplChunk), 1, out);
+    fwrite(loop, sizeof(WaveSampleLoop), 1, out);
+
+    free(header);
+    free(data);
+    free(padding);
+    free(smpl);
+    free(loop);
+
     fclose(out);
 }
 
@@ -117,6 +118,7 @@ int main(int argc, char *argv[]) {
         print_instrument(instr1);
         write_instrument(i, mpr, instr1);
     }
+    free(instr1);
     fclose(mpr);
     return 0;
 }
